@@ -471,8 +471,8 @@ export const jinkela: Select = ({context}) => ([
         consequence() {
     		context.kela = "japan"
     	},
-        disabled: () => true,
-        hidden: () => context.looking === "cool"
+        disabled: true,
+        hidden: context.looking === "cool"
     }
 ])
 ```

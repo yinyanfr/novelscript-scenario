@@ -16,22 +16,48 @@ Novelscript 的设计逻辑是，提供能够置入页面的简单视觉小说�
 
 ### 1. 文本与函数
 
+NSS的基本语法是：以`@`开头的“tag”名（即函数名），后接固定参数的值，和可选参数的名字和值。
+
 ```nss
-@functionName parameterName=parameterValue parameter2Name=parameter2Value
-speakerName@speakerStatus: text
+@tagName ...fixedParameterValues [...optionalParameterName=value]
 ```
 
-#### 1.1 NSS的基本语法是，对于要呈现的文本，直接以文本开头。
+将被转译为：
 
-#### 1.2 对于函数的执行，则以`@`开头
+```json
+{
+    "tag": "tagName",
+    "params": {
+        "fixed": ["fixedParameterValue1", "fixedParameterValueN"],
+        "optional": {
+            "optionalParameterName1": "value1",
+            "optionalParameterNameN": "valueN"
+        }
+    }
+}
+```
+
+**NSS中所有的符号，除`.`外全半角通用。**
+
+
 
 ### 2. 呈现文本
 
-#### 2.1 以分号分隔说话者
+#### 2.1 使用Printer
+
+##### @print text
+
+##### @next
 
 ```nss
-连雨遥@急切：非洲农业不发达，必须要有金坷垃。
+@print 连雨遥@急切：非洲农业不发达，必须要有金坷垃。
+@next
+@print 俞南之@急切：日本资源太缺乏，必须要有金坷垃。
 ```
+
+@print 可以将一行文字显示在对应的文字显示组件上，**然后等待下一步操作**，
+
+@next 用于清除当前显示的文本**和说话者**，以显示下一步的内容
 
 `连雨遥`是说话者的代称，`@急切`是说话者的表情（可选）。
 
@@ -41,15 +67,23 @@ speakerName@speakerStatus: text
 
 说话者的代称和表情的代称由额外的配置文件指定。
 
-#### 2.2 以空行表示换页
+由于文本文字有包含空格和其他符号的特殊性，**`@print`固定只接受一个参数，`@print`后的所有文本都将被解析为同一个参数**
 
-插入空行表示此处需要等待用户操作下一步（点击、自动播放、快进），显示下一句时清除原有文本。
+#### 2.2 语法糖：省略`@print`和`@next`
+
+所有不以@开头的有内容的行，将被视为`@print`，
+
+所有空行将被视为`@next`
+
+以上例子将被写为如下格式。
 
 ```nss
 连雨遥@急切：非洲农业不发达，必须要有金坷垃。
 
 俞南之@急切：日本资源太缺乏，必须要有金坷垃。
 ```
+
+这是NSS推荐的写法，也是剧本创作是自然的写法，以下将沿用这种写法。
 
 显示效果:
 
@@ -65,9 +99,9 @@ speakerName@speakerStatus: text
 俞南之：日本资源太缺乏，必须要有金坷垃。
 ```
 
-#### 2.3 以换行表示同页的继续
+#### 2.3 换行
 
-换行则表示当用户操作下一步时，保留已有内容并**换行**显示下一句。
+并列的`@print`会换行
 
 ```nss
 连雨遥@急切：肥料掺了金坷垃，能吸收两米下的氮磷钾。
@@ -93,7 +127,7 @@ speakerName@speakerStatus: text
 
 ##### @push text
 
-若希望**不换行**达成该效果，需在第二句前添加 `@push`
+`@push` 不插入换行，鼠标点击后在同一行继续输出文字。
 
 ```nss
 连雨遥@急切：肥料掺了金坷垃，能吸收两米下的氮磷钾
@@ -114,52 +148,17 @@ speakerName@speakerStatus: text
 连雨遥：肥料掺了金坷垃，能吸收两米下的氮磷钾。世界肥料都涨价，肥料掺了金坷垃，不流失，不蒸发，零浪费。
 ```
 
-#### 2.4 以`@break`表示换行
+`@push`与`print`相同，会将所有后续内容合并为同一参数处理
+
+
 
 ##### @break [text]
 
-以break显示的换行，每个@break视为一行
-
-```nss
-连雨遥@急切：肥料掺了金坷垃，能吸收两米下的氮磷钾。
-@break
-世界肥料都涨价，肥料掺了金坷垃，不流失，不蒸发，零浪费。
-```
-
-显示效果：
-
-- 初始
-
-```
-连雨遥：肥料掺了金坷垃，能吸收两米下的氮磷钾。
-
-```
-
-- 点击后
-
-```
-连雨遥：肥料掺了金坷垃，能吸收两米下的氮磷钾。
-
-世界肥料都涨价，肥料掺了金坷垃，不流失，不蒸发，零浪费。
-```
+取消，请使用换行符（\n）
 
 
 
-若要直接一次性显示多行文本，则须在每个附加行前加入 `@break`
-
-```nss
-连雨遥@急切：肥料掺了金坷垃，能吸收两米下的氮磷钾
-@break 世界肥料都涨价，肥料掺了金坷垃，不流失，不蒸发，零浪费
-```
-
-显示效果：
-
-```
-连雨遥：肥料掺了金坷垃，能吸收两米下的氮磷钾。
-世界肥料都涨价，肥料掺了金坷垃，不流失，不蒸发，零浪费。
-```
-
-#### 2.5 换页会改变说话者，换行不会
+**换页会改变说话者，换行不会。**
 
 换页（空行）后需要重新指定说话者，否则变为旁白。
 
@@ -167,7 +166,7 @@ speakerName@speakerStatus: text
 
 
 
-#### 2.6 备注
+#### 备注
 
 设计思路是在视觉小说中，最通常的显示模式是一句话一页，其次是每页中每句话进行一次中断。
 
@@ -308,7 +307,7 @@ export const popUp: Animation = () => {
 
 ### 5. 显示动态内容
 
-#### 5.1 模板显示变量
+#### 5.1 运行时运算
 
 ##### @let name=value
 
@@ -322,73 +321,72 @@ export const popUp: Animation = () => {
 
 修改已有变量值，若变量不存在，则新建该变量
 
-在正文中以`{}`包裹变量。
+以`{}`包裹需在运行时运算的内容。
+
+`{}`内部使用`()`包裹需在运行时运算的内容。
 
 ```nss
 @let country=日本
 金坷垃，你们{country}别想啦
 ```
 
-#### 5.2 根据条件显示部分内容 (待定)
+#### 5.2 根据条件显示部分内容 
 
-##### @condition condition ？ ：
+##### condition ？ ：
 
 条件操作符
 
 ##### @is var value
 
+var 是变量名， value是字面值，若要采用变量值，需加括号
+
 比较变量值，同时适用于 **@lt, @lte, @gt, @gte** 等
 
 ```nss
-金坷垃，你们{@condition (@is japan cunning) ? 日本 : 非洲}别想啦
+金坷垃，你们{(@is japan cunning) ? 日本 : 非洲}别想啦
+
+金坷垃，你们{(@gte relation.japan (relation.africa)) ？ 日本 ：非洲}别想啦
 ```
 
-#### 5.3 根据条件显示整段内容
+#### 5.3 分块显示内容
 
-##### @if condition
+##### @block blockName
 
-##### @elseif condition
-
-##### @else
-
-##### @endif
+##### @end blockName
 
 ```nss
-@if (@gte point.lianYuyao 5)
-俞南之：明明是我先来的
+@block favorAfrica
+立夏：非洲农业不发达，我们都要支援他，金坷垃，你们日本别想啦
 
-俞南之：xx也好，yy也好
-
-@else
-连雨遥：明明是我先来的
-
-连雨遥：xx也好，yy也好
-
-@endif
+俞南之：狡猾，狡猾，没有金坷垃，怎么种庄稼？！金坷垃！金坷垃！
+@end favorAfrica
+@block favorNobody
+立夏：金坷垃给了他，对美国农业危害大，决不能给他！
+金坷垃，你们都别想啦！
+@end favorNobody
 ```
+
+写入block的内容不会直接执行.
+
+##### @useBlock blockname
+
+```nss
+@useBlock favorAfrica
+```
+
+##### @if condition blockName blockNameElse
+
+```nss
+@if (@is japan cunning) favorAfrica favorNobody
+```
+
+
 
 #### 5.4 循环、遍历显示内容
 
-##### @for i of
+取消，视觉小说中几乎不会出现要在运行时循环显示内容的情况，建议使用block或自定义模板
 
-##### @endfor
 
-```nss
-@for i of=point.lianYuyao // number
-连雨遥：我再说一遍，这是第{i}遍了
-@endfor
-```
-
-##### @each item of
-
-##### @endeach
-
-```
-现在背包里有这些物品：
-@each item of=inventory // array
-@break {item.name}: {item.detail}
-@endeach
-```
 
 #### 5.5 自定义模板
 

@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/yinyanfr/novelscript-scenario/issues"
   },
-  "homepage": "https://github.com/yinyanfr/novelscript-scenario#readme"
+  "homepage": "https://github.com/yinyanfr/novelscript-scenario#readme",
+  "devDependencies": {
+    "typescript": "^4.3.2"
+  }
 }

@@ -19,5 +19,8 @@
   "homepage": "https://github.com/yinyanfr/novelscript-scenario#readme",
   "devDependencies": {
     "typescript": "^4.3.2"
+  },
+  "dependencies": {
+    "parenthesis": "^3.1.7"
   }
 }

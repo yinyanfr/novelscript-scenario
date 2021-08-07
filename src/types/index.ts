@@ -12,7 +12,7 @@ export interface OptionalParameter {
 export interface TagExtract {
     tag: string
     params?: {
-        fixed?: string[]
+        fixed?: string[] | LineExtract
         optional?: OptionalParameter[]
     }
 }
